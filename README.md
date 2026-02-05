@@ -46,6 +46,16 @@ python main.py --api-key YOUR_KEY
 
 ## Usage
 
+### Web App (recommended for beginners)
+
+```bash
+python app.py
+```
+
+Then open http://localhost:5000 in your browser, paste your API key, and click **Analyze My Emails**. That's it.
+
+### Command Line
+
 ```bash
 # Full analysis with default settings
 python main.py
@@ -63,11 +73,15 @@ python main.py --api-key sk_xxx
 ## Project Structure
 
 ```
-├── main.py          # CLI entry point
+├── app.py           # Web app entry point (open in browser)
+├── main.py          # CLI entry point (terminal)
 ├── kit_client.py    # Kit.com API v4 client
 ├── analyzer.py      # Performance analysis and recommendations engine
 ├── report.py        # Rich terminal report formatting
 ├── config.py        # Configuration and benchmark constants
+├── templates/
+│   ├── index.html   # Web app landing page
+│   └── report.html  # Web app report page
 ├── requirements.txt # Python dependencies
 ├── .env.example     # Template for API key configuration
 └── .gitignore

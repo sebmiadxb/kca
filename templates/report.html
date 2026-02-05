@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Performance Report</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 32px 20px 60px;
+        }
+        a { color: #818cf8; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .header h1 { font-size: 28px; color: #f8fafc; margin-bottom: 4px; }
+        .header p { color: #64748b; font-size: 14px; }
+        .back-link {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        /* Section */
+        .section {
+            background: #1e293b;
+            border-radius: 14px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+        .section h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #334155;
+        }
+
+        /* Metric grid */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+        }
+        .metric-card {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .metric-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-top: 4px;
+        }
+        .metric-value.green { color: #4ade80; }
+        .metric-value.yellow { color: #facc15; }
+        .metric-value.red { color: #f87171; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 8px 12px;
+            border-bottom: 2px solid #334155;
+        }
+        th.right, td.right { text-align: right; }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1e293b;
+            font-size: 14px;
+        }
+        tr:last-child td { border-bottom: none; }
+        .table-wrap {
+            background: #0f172a;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .table-wrap table td { border-color: #1e293b; }
+
+        /* Benchmark badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.excellent { background: #065f46; color: #6ee7b7; }
+        .badge.good { background: #14532d; color: #86efac; }
+        .badge.below_average { background: #713f12; color: #fde047; }
+        .badge.needs_attention { background: #7f1d1d; color: #fca5a5; }
+
+        /* Recommendations */
+        .rec {
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+        }
+        .rec:last-child { margin-bottom: 0; }
+        .rec.high { background: #450a0a; border-left: 4px solid #f87171; }
+        .rec.medium { background: #451a03; border-left: 4px solid #facc15; }
+        .rec.low { background: #052e16; border-left: 4px solid #4ade80; }
+        .rec-header {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .rec-priority {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .rec.high .rec-priority { color: #f87171; }
+        .rec.medium .rec-priority { color: #facc15; }
+        .rec.low .rec-priority { color: #4ade80; }
+        .rec-category {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .rec-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        .rec-detail {
+            font-size: 14px;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+
+        /* Trend sparkline bar */
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #6366f1;
+            min-width: 2px;
+        }
+        .bar-label { font-size: 13px; color: #94a3b8; white-space: nowrap; }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            color: #475569;
+            font-size: 13px;
+        }
+
+        /* Truncate long URLs */
+        .url-cell {
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>Email Performance Report</h1>
+            <p>Kit.com Broadcast Analysis</p>
+            <a class="back-link" href="/">&larr; Run new analysis</a>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SUMMARY -->
+        <!-- ============================================================ -->
+        <div class="section">
+            <h2>Overall Performance</h2>
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-label">Broadcasts Sent</div>
+                    <div class="metric-value">{{ summary.total_broadcasts }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Recipients</div>
+                    <div class="metric-value">{{ "{:,}".format(summary.total_recipients) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Open Rate</div>
+                    <div class="metric-value {% if summary.avg_open_rate >= 0.35 %}green{% elif summary.avg_open_rate >= 0.25 %}yellow{% else %}red{% endif %}">
+                        {{ "%.1f" | format(summary.avg_open_rate * 100) }}%
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Click Rate</div>
+                    <div class="metric-value {% if summary.avg_click_rate >= 0.025 %}green{% elif summary.avg_click_rate >= 0.015 %}yellow{% else %}red{% endif %}">
+                        {{ "%.1f" | format(summary.avg_click_rate * 100) }}%
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Click-to-Open</div>
+                    <div class="metric-value">{{ "%.1f" | format(summary.avg_click_to_open_rate * 100) }}%</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Avg Unsub Rate</div>
+                    <div class="metric-value {% if summary.avg_unsubscribe_rate <= 0.003 %}green{% else %}red{% endif %}">
+                        {{ "%.2f" | format(summary.avg_unsubscribe_rate * 100) }}%
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Opens</div>
+                    <div class="metric-value">{{ "{:,}".format(summary.total_opened) }}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Total Clicks</div>
+                    <div class="metric-value">{{ "{:,}".format(summary.total_clicks) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- BENCHMARKS -->
+        <!-- ============================================================ -->
+        <div class="section">
+            <h2>Industry Benchmark Comparison</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th class="right">You</th>
+                            <th class="right">Benchmark</th>
+                            <th class="right">Delta</th>
+                            <th>Verdict</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for label, data in benchmarks.items() %}
+                        <tr>
+                            <td>{{ label }}</td>
+                            <td class="right">{{ "%.1f" | format(data.value * 100) }}%</td>
+                            <td class="right">{{ "%.1f" | format(data.benchmark * 100) }}%</td>
+                            <td class="right">{{ "%+.1f" | format(data.delta * 100) }}%</td>
+                            <td><span class="badge {{ data.verdict }}">{{ data.verdict | replace("_", " ") | title }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TOP / BOTTOM BROADCASTS -->
+        <!-- ============================================================ -->
+        <div class="section">
+            <h2>Top Broadcasts by Open Rate</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>Subject</th><th class="right">Open Rate</th></tr></thead>
+                    <tbody>
+                        {% for bc, val in top_open %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ bc.subject or "(no subject)" }}</td>
+                            <td class="right">{{ "%.1f" | format(val * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Lowest Broadcasts by Open Rate</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>Subject</th><th class="right">Open Rate</th></tr></thead>
+                    <tbody>
+                        {% for bc, val in bottom_open %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ bc.subject or "(no subject)" }}</td>
+                            <td class="right">{{ "%.1f" | format(val * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Top Broadcasts by Click Rate</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>Subject</th><th class="right">Click Rate</th></tr></thead>
+                    <tbody>
+                        {% for bc, val in top_click %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ bc.subject or "(no subject)" }}</td>
+                            <td class="right">{{ "%.1f" | format(val * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SUBJECT LINE ANALYSIS -->
+        <!-- ============================================================ -->
+        <div class="section">
+            <h2>Subject Line Analysis</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Pattern</th><th class="right">Count</th><th class="right">Avg Open Rate</th></tr></thead>
+                    <tbody>
+                        {% set sa = subject_analysis %}
+                        {% set rows = [
+                            ("Short (40 chars or fewer)", sa.short_subject_count, sa.short_subject_avg_open),
+                            ("Medium (41-60 chars)", sa.medium_subject_count, sa.medium_subject_avg_open),
+                            ("Long (over 60 chars)", sa.long_subject_count, sa.long_subject_avg_open),
+                            ("Contains question (?)", sa.question_count, sa.question_avg_open),
+                            ("Contains numbers", sa.number_count, sa.number_avg_open),
+                            ("Contains emoji/special", sa.emoji_count, sa.emoji_avg_open),
+                            ("Personalized (you/your)", sa.personalized_count, sa.personalized_avg_open),
+                        ] %}
+                        {% for label, count, avg in rows %}
+                            {% if count and count > 0 %}
+                            <tr>
+                                <td>{{ label }}</td>
+                                <td class="right">{{ count }}</td>
+                                <td class="right">{% if avg is not none %}{{ "%.1f" | format(avg * 100) }}%{% else %}N/A{% endif %}</td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- SEND TIME ANALYSIS -->
+        <!-- ============================================================ -->
+        <div class="section">
+            <h2>Send Time Analysis</h2>
+
+            {% set by_day = send_time_analysis.by_day %}
+            {% if by_day %}
+            <h3 style="font-size:14px; color:#94a3b8; margin-bottom:12px;">By Day of Week</h3>
+            <div class="table-wrap" style="margin-bottom:20px;">
+                <table>
+                    <thead><tr><th>Day</th><th class="right">Broadcasts</th><th class="right">Avg Open Rate</th><th>Visual</th></tr></thead>
+                    <tbody>
+                        {% set day_order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"] %}
+                        {% set max_day_rate = by_day.values() | map(attribute="avg_open_rate") | max %}
+                        {% for day in day_order %}
+                            {% if day in by_day %}
+                            {% set d = by_day[day] %}
+                            <tr>
+                                <td>{{ day }}</td>
+                                <td class="right">{{ d.count }}</td>
+                                <td class="right">{{ "%.1f" | format(d.avg_open_rate * 100) }}%</td>
+                                <td>
+                                    <div class="bar-container">
+                                        <div class="bar" style="width: {{ (d.avg_open_rate / max_day_rate * 120) | int }}px;"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            {% set by_hour = send_time_analysis.by_hour %}
+            {% if by_hour %}
+            <h3 style="font-size:14px; color:#94a3b8; margin-bottom:12px;">By Hour of Day (UTC)</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Hour</th><th class="right">Broadcasts</th><th class="right">Avg Open Rate</th><th>Visual</th></tr></thead>
+                    <tbody>
+                        {% set max_hour_rate = by_hour.values() | map(attribute="avg_open_rate") | max %}
+                        {% for hour in by_hour.keys() | sort %}
+                        {% set h = by_hour[hour] %}
+                        <tr>
+                            <td>{{ "%02d:00" | format(hour) }}</td>
+                            <td class="right">{{ h.count }}</td>
+                            <td class="right">{{ "%.1f" | format(h.avg_open_rate * 100) }}%</td>
+                            <td>
+                                <div class="bar-container">
+                                    <div class="bar" style="width: {{ (h.avg_open_rate / max_hour_rate * 120) | int }}px;"></div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- TREND -->
+        <!-- ============================================================ -->
+        {% if trends %}
+        <div class="section">
+            <h2>Performance Trend</h2>
+            <div class="table-wrap" style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Subject</th>
+                            <th class="right">Recipients</th>
+                            <th class="right">Open Rate</th>
+                            <th class="right">Click Rate</th>
+                            <th class="right">Unsub Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in trends %}
+                        <tr>
+                            <td style="white-space:nowrap;">{{ t.date.strftime("%Y-%m-%d") if t.date else "—" }}</td>
+                            <td>{{ (t.subject or "(no subject)")[:50] }}</td>
+                            <td class="right">{{ "{:,}".format(t.recipients) }}</td>
+                            <td class="right">{{ "%.1f" | format(t.open_rate * 100) }}%</td>
+                            <td class="right">{{ "%.1f" | format(t.click_rate * 100) }}%</td>
+                            <td class="right">{{ "%.2f" | format(t.unsubscribe_rate * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ============================================================ -->
+        <!-- TOP LINKS -->
+        <!-- ============================================================ -->
+        {% if links %}
+        <div class="section">
+            <h2>Top Clicked Links</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>URL</th><th class="right">Unique Clicks</th><th class="right">Avg CTO Rate</th></tr></thead>
+                    <tbody>
+                        {% for url, clicks, cto in links %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td class="url-cell"><a href="{{ url }}" target="_blank">{{ url[:70] }}{% if url|length > 70 %}...{% endif %}</a></td>
+                            <td class="right">{{ clicks }}</td>
+                            <td class="right">{{ "%.1f" | format(cto * 100) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ============================================================ -->
+        <!-- RECOMMENDATIONS -->
+        <!-- ============================================================ -->
+        <div class="section">
+            <h2>Recommendations</h2>
+            {% if recommendations %}
+                {% set priority_order = {"high": 0, "medium": 1, "low": 2} %}
+                {% for rec in recommendations | sort(attribute="priority") %}
+                <div class="rec {{ rec.priority }}">
+                    <div class="rec-header">
+                        <span class="rec-priority">{{ rec.priority }}</span>
+                        <span class="rec-category">{{ rec.category }}</span>
+                    </div>
+                    <div class="rec-title">{{ rec.title }}</div>
+                    <div class="rec-detail">{{ rec.detail }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color:#94a3b8;">No specific recommendations — your metrics look solid!</p>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            Data sourced from Kit.com API v4. Benchmarks based on creator/newsletter industry averages.<br>
+            Open-rate accuracy depends on email client image loading; actual engagement may be higher.
+        </div>
+
+    </div>
+</body>
+</html>
