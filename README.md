@@ -14,76 +14,64 @@ Fetches your email broadcast data from [Kit.com](https://kit.com) (formerly Conv
 - **Industry Benchmarks** — how you compare to creator/newsletter averages
 - **Top Links** — which URLs get the most clicks across all broadcasts
 
-## Setup
+## Deploy to a Live Website (Render — free)
+
+The easiest way to get this running. No coding or terminal required.
 
 ### 1. Get your Kit API key
 
 1. Go to [Kit Developer Settings](https://app.kit.com/account_settings/developer_settings)
-2. Click "Add a new key"
+2. Click **"Add a new key"**
 3. Copy the key immediately (it won't be shown again)
 
-### 2. Install dependencies
+### 2. Deploy to Render
+
+1. Create a free account at [render.com](https://render.com)
+2. Click **New > Web Service**
+3. Connect your GitHub account and select this repository
+4. Render auto-detects the settings — just click **Create Web Service**
+5. Wait for the build to finish (a few minutes)
+6. You'll get a URL like `https://email-performance-analyzer-xxxx.onrender.com`
+7. Open that URL, paste your Kit API key, and click **Analyze My Emails**
+
+That's it. Bookmark the URL and use it whenever you want.
+
+## Alternative: Run Locally
+
+If you prefer running it on your own computer:
 
 ```bash
 pip install -r requirements.txt
-```
-
-### 3. Configure your API key
-
-Copy the example env file and add your key:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and replace `your_api_key_here` with your actual API key.
-
-Alternatively, pass it directly:
-
-```bash
-python main.py --api-key YOUR_KEY
-```
-
-## Usage
-
-### Web App (recommended for beginners)
-
-```bash
 python app.py
 ```
 
-Then open http://localhost:5000 in your browser, paste your API key, and click **Analyze My Emails**. That's it.
+Then open http://localhost:5000 in your browser.
 
-### Command Line
+### Command Line (advanced)
 
 ```bash
-# Full analysis with default settings
-python main.py
-
-# Show top/bottom 10 broadcasts instead of 5
-python main.py --top 10
-
-# Export report to a text file
-python main.py --export report.txt
-
-# Use a specific API key
-python main.py --api-key sk_xxx
+python main.py                    # Full analysis
+python main.py --top 10           # Show top/bottom 10
+python main.py --export report.txt  # Save to file
+python main.py --api-key sk_xxx   # Pass key directly
 ```
 
 ## Project Structure
 
 ```
-├── app.py           # Web app entry point (open in browser)
-├── main.py          # CLI entry point (terminal)
+├── app.py           # Web app
+├── main.py          # CLI (terminal alternative)
 ├── kit_client.py    # Kit.com API v4 client
-├── analyzer.py      # Performance analysis and recommendations engine
-├── report.py        # Rich terminal report formatting
+├── analyzer.py      # Performance analysis + recommendations engine
+├── report.py        # Terminal report formatting
 ├── config.py        # Configuration and benchmark constants
 ├── templates/
-│   ├── index.html   # Web app landing page
-│   └── report.html  # Web app report page
+│   ├── index.html   # Landing page
+│   └── report.html  # Report page
+├── render.yaml      # Render deployment config
+├── Procfile         # Process config for hosting
 ├── requirements.txt # Python dependencies
-├── .env.example     # Template for API key configuration
+├── .env.example     # API key template (local use)
 └── .gitignore
 ```
 
