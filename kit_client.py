@@ -26,11 +26,18 @@ class KitClient:
             )
         self.session = requests.Session()
         self.session.headers.update({"X-Kit-Api-Key": self.api_key})
-        self._rate_limit_remaining = 120
+        self._request_count = 0
 
-    def _request(self, method, path, params=None, max_retries=3):
+    def _request(self, method, path, params=None, max_retries=6):
         """Make an API request with retry logic and rate-limit handling."""
         url = f"{KIT_API_BASE}{path}"
+
+        # Pace requests: pause every 100 calls to stay within the
+        # 120 requests / 60 seconds rolling window.
+        self._request_count += 1
+        if self._request_count % 100 == 0:
+            time.sleep(60)
+
         for attempt in range(max_retries + 1):
             try:
                 resp = self.session.request(method, url, params=params, timeout=30)
@@ -41,10 +48,11 @@ class KitClient:
                 raise KitAPIError(0, f"Network error: {exc}") from exc
 
             if resp.status_code == 429:
-                # Rate limited — back off and retry
-                retry_after = int(resp.headers.get("Retry-After", 2 ** attempt))
+                # Rate limited — wait and retry with increasing backoff
+                retry_after = int(resp.headers.get("Retry-After", 0))
+                wait = max(retry_after, 2 ** attempt, 10)
                 if attempt < max_retries:
-                    time.sleep(retry_after)
+                    time.sleep(wait)
                     continue
                 raise KitAPIError(429, "Rate limited. Try again later.")
 
@@ -130,4 +138,6 @@ class KitClient:
             # Fetch click details
             bc["clicks"] = self.get_broadcast_clicks(bid)
             enriched.append(bc)
+            # Small delay between broadcasts to respect rate limits
+            time.sleep(0.6)
         return enriched
